@@ -1,15 +1,31 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import { Modal, Form, Button } from 'react-bootstrap'
+import { useContacts } from '../contexts/ContactsProvider'
+import { useConversations } from '../contexts/ConversationsProvider'
+
 
 export default function ModalConversation({closeModal}) {
+  const { contacts } = useContacts();
+  const { createConversations } = useConversations();
+  const [selectedContactsIds, setSelectedContactsIds] = useState([]);
 
-  const idRef = useRef()
-  const nameRef = useRef()
+  const handleCheckboxChange = (contactId) => {
+    setSelectedContactsIds(prevSelectedContactIds => {
+      if(prevSelectedContactIds.includes(contactId)) {
+        return prevSelectedContactIds.filter(prevId => { 
+          return contactId !== prevId
+        })
+      } else {
+        return [...prevSelectedContactIds, contactId]
+      }
+
+    })
+  }
 
   const handleSubmit = e => {
     e.preventDefault()
 
-    // createConversation(idRef.current.value, name.current.value)
+    createConversations(selectedContactsIds)
     closeModal()
   }
 
@@ -18,15 +34,16 @@ export default function ModalConversation({closeModal}) {
       <Modal.Header closeButton>Create Conversation</Modal.Header>
       <Modal.Body>
           <Form onSubmit={handleSubmit}>
-            <Form.Group>
-              <Form.Label>ID</Form.Label>
-              <Form.Control type='text' ref={idRef} required/>
-            </Form.Group>  
-            <Form.Group>
-              <Form.Label>Name</Form.Label>
-              <Form.Control type='text' ref={nameRef} required/>
-            </Form.Group>  
-
+            {contacts.map(contact => (
+              <Form.Group controlId={contact.id} key={contact.id} >
+                <Form.Check
+                  type="checkbox"
+                  label={contact.name}
+                  value={selectedContactsIds.includes(contact.id)}
+                  onChange={() => handleCheckboxChange(contact.id)}
+                />
+              </Form.Group>
+            ))}
             <Button type="submit" className='mt-4'>Create</Button>
           </Form>
       </Modal.Body>
